@@ -21,11 +21,23 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check Azure credentials are configured
+        id: check_secrets
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrEmpty('${{ secrets.AZURE_CLIENT_ID }}') -or [string]::IsNullOrEmpty('${{ secrets.AZURE_TENANT_ID }}')) {
+            Write-Warning "AZURE_CLIENT_ID and/or AZURE_TENANT_ID repository secrets are not configured; skipping Foundry sync."
+            echo "configured=false" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "configured=true" >> $env:GITHUB_OUTPUT
+          }
       - uses: azure/login@v2
+        if: steps.check_secrets.outputs.configured == 'true'
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: 07122d2f-74de-4565-bd61-4d673d621fe8
       - name: Upload immutable skill versions
+        if: steps.check_secrets.outputs.configured == 'true'
         shell: pwsh
         run: ./scripts/Sync-Foundry.ps1 -ProjectName '${{ inputs.project_name || vars.FOUNDRY_PROJECT_NAME }}'
