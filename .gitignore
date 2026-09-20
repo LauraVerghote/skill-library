@@ -1,0 +1,7 @@
+.artifacts/
+.azure/
+**/bin/
+**/obj/
+history/
+*.zip
+.env

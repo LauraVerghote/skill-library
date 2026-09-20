@@ -1,0 +1,5 @@
+description: Published Northstar skills for MCP-compatible coding tools and agents.
+skills:
+  - name: customer-response
+  - name: pii-redaction
+  - name: secure-code-review

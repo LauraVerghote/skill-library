@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  title: Northstar Skill Library API
+  version: 1.0.0
+  description: Entra-protected catalog and invocation facade for Synthetix and other agents.
+servers:
+  - url: https://REPLACE_WITH_CONTAINER_APP_FQDN
+paths:
+  /api/skills:
+    get:
+      operationId: listAuthorizedSkills
+      summary: List skills visible to the signed-in caller
+      responses:
+        '200':
+          description: Authorized skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
+  /api/skills/{id}:
+    get:
+      operationId: getAuthorizedSkill
+      summary: Get one skill and its current instructions
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      responses:
+        '200':
+          description: Skill details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '403':
+          description: Caller cannot read this skill
+        '404':
+          description: Skill not found
+  /api/skills/{id}/run:
+    post:
+      operationId: runAuthorizedSkill
+      summary: Resolve a published skill into an invocation envelope
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inputs]
+              properties:
+                inputs:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Version-pinned skill invocation
+        '403':
+          description: Caller cannot run this skill
+        '409':
+          description: Skill is not published
+components:
+  parameters:
+    SkillId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    Skill:
+      type: object
+      required: [id, name, description, version, state, instructions]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        version: { type: string }
+        state: { type: string, enum: [draft, published] }
+        instructions: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+  securitySchemes:
+    entraId:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/common/oauth2/v2.0/token
+          scopes:
+            api://REPLACE_WITH_APP_CLIENT_ID/access_as_user: Access the skill library
+security:
+  - entraId: [api://REPLACE_WITH_APP_CLIENT_ID/access_as_user]

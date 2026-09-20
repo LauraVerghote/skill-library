@@ -1,0 +1,53 @@
+[
+	{
+		"id": "customer-response",
+		"name": "Customer response",
+		"description": "Draft a concise, evidence-grounded customer response for Synthetix.",
+		"version": "1",
+		"state": "published",
+		"tags": ["synthetix", "customer", "global"],
+		"instructions": "Draft a concise response using only supplied facts. Separate confirmed facts from assumptions, include an owner and due date for every action, and never invent commitments.",
+		"access": {
+			"read": ["authenticated-users"],
+			"write": ["skill-authors"],
+			"run": ["skill-runners"]
+		},
+		"enabledUsers": [],
+		"updatedBy": "lverghote@MngEnvMCAP125495.onmicrosoft.com",
+		"updatedAt": "2026-09-20T00:00:00Z"
+	},
+	{
+		"id": "pii-redaction",
+		"name": "PII redaction",
+		"description": "Redact common personal identifiers before text is sent to an agent.",
+		"version": "1",
+		"state": "published",
+		"tags": ["synthetix", "privacy", "domain-security"],
+		"instructions": "Run scripts/redact.py against input text. Return the redacted text and a count by identifier type. Never echo an original identifier in logs or output.",
+		"access": {
+			"read": ["skill-readers", "skill-authors"],
+			"write": ["skill-authors"],
+			"run": ["skill-runners"]
+		},
+		"enabledUsers": [],
+		"updatedBy": "lverghote@MngEnvMCAP125495.onmicrosoft.com",
+		"updatedAt": "2026-09-20T00:00:00Z"
+	},
+	{
+		"id": "secure-code-review",
+		"name": "Secure code review",
+		"description": "Apply the shared engineering review checklist in coding agents.",
+		"version": "1",
+		"state": "draft",
+		"tags": ["developer", "github-copilot", "global"],
+		"instructions": "Review for correctness, security, reliability, and missing tests. Lead with concrete findings ordered by severity and cite file paths and lines.",
+		"access": {
+			"read": ["skill-readers", "skill-authors"],
+			"write": ["skill-authors"],
+			"run": ["skill-runners"]
+		},
+		"enabledUsers": [],
+		"updatedBy": "lverghote@MngEnvMCAP125495.onmicrosoft.com",
+		"updatedAt": "2026-09-20T00:00:00Z"
+	}
+]

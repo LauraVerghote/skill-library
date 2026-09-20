@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Northstar Skill Library</title>
+  <style>
+    :root { --ink:#17211b; --paper:#f5f7f2; --panel:#fff; --line:#ccd4cc; --green:#176b45; --coral:#d7583d; --muted:#5d6a62; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 85% 8%,#dbe9dd 0,transparent 28%),linear-gradient(135deg,#f8f4ea,var(--paper)); font:16px/1.45 Georgia,serif; min-height:100vh; }
+    header { padding:32px clamp(20px,5vw,72px) 22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:24px; align-items:end; }
+    h1 { margin:0; font:700 clamp(30px,4vw,54px)/1.05 Georgia,serif; letter-spacing:0; }
+    header p { color:var(--muted); margin:8px 0 0; }
+    .identity { text-align:right; font:13px Consolas,monospace; }
+    main { display:grid; grid-template-columns:minmax(240px,340px) 1fr; min-height:calc(100vh - 130px); }
+    aside { padding:24px clamp(20px,3vw,40px); border-right:1px solid var(--line); }
+    #skills { display:grid; gap:8px; }
+    .skill { width:100%; border:1px solid transparent; background:transparent; padding:12px; text-align:left; cursor:pointer; font:inherit; }
+    .skill:hover,.skill.active { border-color:var(--line); background:rgba(255,255,255,.72); }
+    .skill strong,.skill span { display:block; }
+    .skill span { color:var(--muted); font-size:13px; margin-top:3px; }
+    article { padding:32px clamp(24px,6vw,86px); max-width:1000px; }
+    .eyebrow { color:var(--green); font:700 12px Consolas,monospace; text-transform:uppercase; }
+    h2 { font-size:34px; margin:8px 0; letter-spacing:0; }
+    .meta { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 28px; }
+    .tag { border:1px solid var(--line); padding:4px 8px; font:12px Consolas,monospace; }
+    label { display:block; font-weight:700; margin:18px 0 6px; }
+    input,textarea { width:100%; border:1px solid var(--line); background:var(--panel); padding:12px; color:var(--ink); font:15px/1.45 Consolas,monospace; }
+    textarea { min-height:220px; resize:vertical; }
+    .actions { display:flex; gap:10px; margin-top:18px; }
+    button.action { border:0; background:var(--green); color:white; padding:10px 16px; cursor:pointer; font-weight:700; }
+    button.secondary { background:var(--coral); }
+    #notice { min-height:24px; margin-top:14px; color:var(--green); }
+    @media(max-width:760px){ header{align-items:start;flex-direction:column}.identity{text-align:left}main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)} }
+  </style>
+</head>
+<body>
+  <header><div><h1>Northstar skills</h1><p>One governed library for people, agents, and coding tools.</p></div><div class="identity" id="identity">Connecting...</div></header>
+  <main>
+    <aside><div class="eyebrow">Available to you</div><div id="skills"></div></aside>
+    <article id="detail"><p>Select a skill to inspect or maintain it.</p></article>
+  </main>
+  <script>
+    let current;
+    const api = async (url, options) => { const response=await fetch(url,options); if(!response.ok) throw new Error(`${response.status} ${await response.text()}`); return response.json(); };
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    async function load(){
+      const [me,skills]=await Promise.all([api('/api/me'),api('/api/skills')]);
+      document.querySelector('#identity').textContent=`${me.name} · ${me.grants.length} grants`;
+      document.querySelector('#skills').innerHTML=skills.map(s=>`<button class="skill" data-id="${s.id}"><strong>${escapeHtml(s.name)}</strong><span>${s.state} · v${s.version}</span></button>`).join('');
+      document.querySelectorAll('.skill').forEach(button=>button.onclick=()=>openSkill(button.dataset.id));
+      if(skills.length) openSkill(skills[0].id);
+    }
+    async function openSkill(id){
+      current=await api(`/api/skills/${id}`);
+      document.querySelectorAll('.skill').forEach(button=>button.classList.toggle('active',button.dataset.id===id));
+      document.querySelector('#detail').innerHTML=`<div class="eyebrow">${escapeHtml(current.state)} · version ${escapeHtml(current.version)}</div><h2>${escapeHtml(current.name)}</h2><p>${escapeHtml(current.description)}</p><div class="meta">${current.tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div><label for="description">Description</label><input id="description" value="${escapeHtml(current.description)}"><label for="instructions">Instructions</label><textarea id="instructions">${escapeHtml(current.instructions)}</textarea><label for="tags">Tags</label><input id="tags" value="${escapeHtml(current.tags.join(', '))}"><div class="actions"><button class="action" id="save">Save draft</button><button class="action secondary" id="publish">Publish</button></div><div id="notice" role="status"></div>`;
+      document.querySelector('#save').onclick=save;
+      document.querySelector('#publish').onclick=publish;
+    }
+    async function save(){
+      const body={description:document.querySelector('#description').value,instructions:document.querySelector('#instructions').value,tags:document.querySelector('#tags').value.split(',').map(x=>x.trim()).filter(Boolean)};
+      current=await api(`/api/skills/${current.id}/draft`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      document.querySelector('#notice').textContent='Draft saved. Publish when review is complete.';
+    }
+    async function publish(){ current=await api(`/api/skills/${current.id}/publish`,{method:'POST'}); document.querySelector('#notice').textContent=`Published immutable version ${current.version}.`; setTimeout(load,700); }
+    load().catch(error=>document.querySelector('#detail').textContent=error.message);
+  </script>
+</body>
+</html>
