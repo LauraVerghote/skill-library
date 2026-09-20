@@ -24,9 +24,12 @@ jobs:
       - name: Check Azure credentials are configured
         id: check_secrets
         shell: pwsh
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
-          if ([string]::IsNullOrEmpty('${{ secrets.AZURE_CLIENT_ID }}') -or [string]::IsNullOrEmpty('${{ secrets.AZURE_TENANT_ID }}')) {
-            Write-Warning "AZURE_CLIENT_ID and/or AZURE_TENANT_ID repository secrets are not configured; skipping Foundry sync."
+          if ([string]::IsNullOrEmpty($env:AZURE_CLIENT_ID) -or [string]::IsNullOrEmpty($env:AZURE_TENANT_ID)) {
+            Write-Host "::warning::AZURE_CLIENT_ID and/or AZURE_TENANT_ID repository secrets are not configured; skipping Foundry sync."
             echo "configured=false" >> $env:GITHUB_OUTPUT
           } else {
             echo "configured=true" >> $env:GITHUB_OUTPUT
